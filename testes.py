@@ -1,117 +1,59 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+import csv
 
+def atribuirlista(variavel,lista:list):
+    if variavel:
+        lista.append(variavel)
+    else:
+        lista.append('-')
 
-#OPÇÕES DE CONFIGURAÇÃO DO NAVEGADOR
-options = webdriver.ChromeOptions()
-options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.add_experimental_option('useAutomationExtension', False)
+#LEITURA DO CÓDIGO DE BARRAS DO ARQUIVO CSV
+print('REALIZANDO A LEITURA DA PLANILHA...')
+listacode = []
+listafab = []
+listadesc = []
+listaun = []
+listaean = []
+listaqnt = []
+listavalor = []
+listacontarnome = []
+listacontarbarcode = []
 
-#ABRIR O NAVEGADOR, COM AS CONFIGURAÇÕES AJUSTADAS ANTERIORMENTE
-driver = webdriver.Chrome(executable_path="driver/chromedriver.exe",options=options)
-driver.get('https://www.google.com.br')
-time.sleep(5)
+#Quantidade,Valor,Contar Nome,Contar Barcode
+with open('csv/ListadeProdutos.csv', encoding='utf-8') as arquivo_referencia:
+  #vai ler a tabela delimitado por virgulas
+  tabela = csv.reader(arquivo_referencia, delimiter=',')
+  #essa variavel é somente para pular a primeira linha
+  linha = 0
+  for l in tabela:
+    #se for a primeira linha, não faz nada, só incrementa a linha
+    if linha == 0:
+        linha += 1
+    #senao, realiza as operações seguintes
+    else:
+        #pega todos os dados da 5º coluna, que neste caso são os Codigo de barras
+        atribuirlista(l[0], listacode)
+        atribuirlista(l[1], listafab)
+        atribuirlista(l[2], listadesc)
+        atribuirlista(l[3], listaun)
+        atribuirlista(l[4], listaean)
+        atribuirlista(l[5], listaqnt)
+        atribuirlista(l[6], listavalor)
+        atribuirlista(l[7], listacontarnome)
+        atribuirlista(l[8], listacontarbarcode)
 
-#driver.find_element_by_xpath('//*[@id="onetrust-accept-btn-handler"]').click()
+print('LEITURA DA PLANILHA CONCLUÍDA')
 
+#GRAVANDO EM UMA NOVA PLANILHA
+print('CRIANDO UMA NOVA PLANILHA...')
+# 1. cria o arquivo
+f = open('csv/Resultado.csv', 'w', newline='', encoding='utf-8')
 
-input_busca = driver.find_element_by_xpath('//input[@name="q"]')
-input_busca.clear()
-input_busca.send_keys('7899432885551' + Keys.ENTER)
-time.sleep(3)
+# 2. cria o objeto de gravação
+w = csv.writer(f)
 
-#driver.find_element_by_xpath('//*[@id="rso"]//div//h3').click()
-#time.sleep(3)
-
-elementos = driver.find_elements_by_xpath('//*[@id="rso"]//div//a')
-linkmagalu = ''
-for link in elementos:
-    if 'magazineluiza.com.br' in link.get_attribute('href'):
-        linkmagalu = link.get_attribute('href')
-        break
-if linkmagalu != '':
-    driver.get(linkmagalu)
-    time.sleep(5)
-
-try:
-    driver.find_element_by_xpath('//button[@data-testid="button-message-box"]').click()
-except:
-    print('Ja aceitou os cookies')
-else:
-    time.sleep(1)
-    driver.find_element_by_xpath('//div[@class="container-button-banner"]').click()
-    time.sleep(1)
-
-nameproduto = driver.find_element_by_xpath('//*[@data-testid="heading-product-title"]').text
-nameproduto = nameproduto.split(' - ')[0]
-marca = driver.find_element_by_xpath('//*[@data-testid="heading-product-brand"]').text
-img = driver.find_element_by_xpath('//img[@data-testid="image-selected-thumbnail"]').get_attribute('src')
-categorias = driver.find_elements_by_xpath('//*[@data-testid="breadcrumb-item-list"]')
-cat = categorias[2].text
-subcat = categorias[3].text
-
-
-
-#driver.find_element_by_xpath('//img[@class="s-image"]').click()
-
-#nameproduto = driver.find_element_by_xpath('//*[@id="productTitle"]').text
-#marca = driver.find_element_by_xpath('//*[@id="bylineInfo"]').text
-#marca = marca.split(':')[1].strip()
-#img = driver.find_element_by_xpath('//*[@id="landingImage"]').get_attribute('src')
-#elementos = driver.find_elements_by_xpath('//*[@id="nav-subnav"]/a')
-#cat = elementos[0].text
-#subcat = elementos[len(elementos)-1].text
-
-print(nameproduto)
-print(marca)
-print(img)
-print(cat)
-print(subcat)
-
-"""
-                elif 'telhanorte.com.br' in url:
-                    #aceitar os cookies da pagina, caso exista essa opção, senão apenas pula
-                    try:
-                        driver.find_element_by_xpath('//*[@id="onetrust-accept-btn-handler"]').click()
-                    except:
-                        pass
-
-                    # buscar o produto pelo codigo
-                    input_busca = driver.find_element_by_xpath('//*[@id="chaordicSearch"]')
-                    input_busca.clear()
-                    input_busca.send_keys(cod + Keys.ENTER)
-                    time.sleep(3)
-
-                    # verificar se encontrou o resultado
-                    try:
-                        resul = driver.find_element_by_xpath('//p[@class="x-category__product-qty"]').text
-                    except:
-                        # senao encontrou pular para o proximo site de busca
-                        continue
-                    else:
-                        #caso encontre, retornará apenas um produto, pois o código de barras é único
-                        if '1 produto' in resul:
-                            #acessa a pagina do produto encontrado
-                            driver.find_element_by_xpath('//a[@class="x-shelf__link"]').click()
-                            time.sleep(3)
-
-                            #capturar as informações desejadas, através do site aberto
-                            nameproduto = driver.find_element_by_xpath('//h1[@rv-text="state.productName"]').text
-                            marca = nameproduto.split(' ')
-                            marca = marca[len(marca)-1]
-                            img = driver.find_element_by_xpath('//*[@id="productImage"]').get_attribute('src')
-                            categorias = driver.find_elements_by_xpath('//li[@itemprop]')
-                            cat = categorias[1].text
-                            subcat = driver.find_element_by_xpath('//li[@class="last"]').text
-
-                            #adicionar as informações obtidas anteriormente, nas listas
-                            nomesprodutos.append(nameproduto)
-                            listamarca.append(marca)
-                            listacat.append(cat)
-                            listasubcat.append(subcat)
-                            listaimg.append(img)
-
-                            #parar o loop de urls de buscas
-                            break
-                """
+print('Escrevendo na planilha criada')
+#escreve a primeira linha
+w.writerow(['Código','Fabricante','Descricao dos Produtos','UN','EAN/GTIN','Quantidade','Valor','Contar Nome','Contar Barcode'])
+for i in range(len(listaean)):
+    #escreve as proximas linhas
+    w.writerow([listacode[i],listafab[i],listadesc[i],listaun[i],listaean[i],listaqnt[i],listavalor[i],listacontarnome[i],listacontarbarcode[i]])

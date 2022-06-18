@@ -62,7 +62,7 @@ ll = 0
 print('GERANDO O RESULTADO...')
 for cod in listacod:
     # caso exista codigo de barras e não seja SEM GTIN, realizar a operação de buscar informações
-    if cod and not 'SEM GTIN' in cod:
+    if cod and not 'SEM GTIN' in cod and not '-' in cod:
         for url in urlsbusca:
             # vai acessar todas as urls de buscas presente na lista urlsbusca
             try:
@@ -101,24 +101,37 @@ for cod in listacod:
                         continue
                     else:
                         # se ter resultado, capturar os atributos do produto
-                        nameproduto = driver.find_element_by_xpath('//*[@id="productTitle"]').text
-                        marca = driver.find_element_by_xpath('//*[@id="bylineInfo"]').text
-                        if ':' in marca:
-                            marca = marca.split(':')[1].strip()
-                        img = driver.find_element_by_xpath('//*[@id="landingImage"]').get_attribute('src')
-                        categorias = driver.find_elements_by_xpath('//*[@id="nav-subnav"]/a')
-                        cat = categorias[0].text
-                        subcat = categorias[len(categorias) - 1].text
+                        try:
+                            nameproduto = driver.find_element_by_xpath('//*[@id="productTitle"]').text
+                        except:
+                            continue
+                        try:
+                            marca = driver.find_element_by_xpath('//*[@id="bylineInfo"]').text
+                        except:
+                            continue
+                        else:
+                            if ':' in marca:
+                                marca = marca.split(':')[1].strip()
+                        try:
+                            img = driver.find_element_by_xpath('//*[@id="landingImage"]').get_attribute('src')
+                        except:
+                            continue
+                        try:
+                            categorias = driver.find_elements_by_xpath('//*[@id="nav-subnav"]/a')
+                        except:
+                            continue
+                        else:
+                            cat = categorias[0].text
+                            subcat = categorias[len(categorias)-1].text
                         if subcat == '':
                             subcat = 'null'
-                        # adicionar os atributos nas listas
+                        #adicionar os atributos nas listas
                         nomesprodutos.append(nameproduto)
                         listamarca.append(marca)
                         listacat.append(cat)
                         listasubcat.append(subcat)
                         listaimg.append(img)
-
-                        # parar o loop de urls de buscas
+                        #parar o loop de urls de buscas
                         break
                 elif 'google.com.br' in url:
                     # buscar pelo produto
@@ -183,14 +196,24 @@ for cod in listacod:
                                         continue
                                     else:
                                         nameproduto = nameproduto.split(' - ')[0]
-                                    marca = driver.find_element_by_xpath(
-                                        '//*[@data-testid="heading-product-brand"]').text
-                                    img = driver.find_element_by_xpath(
-                                        '//img[@data-testid="image-selected-thumbnail"]').get_attribute('src')
-                                    categorias = driver.find_elements_by_xpath(
-                                        '//*[@data-testid="breadcrumb-item-list"]')
-                                    cat = categorias[2].text
-                                    subcat = categorias[3].text
+                                    try:
+                                        marca = driver.find_element_by_xpath('//*[@data-testid="heading-product-brand"]').text
+                                    except:
+                                        continue
+                                    try:
+                                        img = driver.find_element_by_xpath('//img[@data-testid="image-selected-thumbnail"]').get_attribute('src')
+                                    except:
+                                        continue
+                                    try:
+                                        categorias = driver.find_elements_by_xpath('//*[@data-testid="breadcrumb-item-list"]')
+                                    except:
+                                        continue
+                                    else:
+                                        try:
+                                            cat = categorias[2].text
+                                            subcat = categorias[3].text
+                                        except:
+                                            continue
 
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
@@ -210,15 +233,27 @@ for cod in listacod:
                                         nameproduto = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]//h1').text
                                     except:
                                         continue
-                                    marca = driver.find_element_by_xpath(
-                                        '//*[@id="rsyswpsdk"]/div/main/div[6]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
-                                    img = driver.find_element_by_xpath(
-                                        '//*[@id="rsyswpsdk"]/div/div/div/div/div/div/a/div/div/picture/img').get_attribute(
-                                        'src')
-                                    categorias = driver.find_elements_by_xpath(
-                                        '//*[@id="rsyswpsdk"]/div/main/div[1]/div/ul/li')
-                                    cat = categorias[1].text
-                                    subcat = categorias[len(categorias) - 1].text
+                                    try:
+                                        marca = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/main/div[6]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
+                                    except:
+                                        try:
+                                            marca = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/main/div[7]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
+                                        except:
+                                            continue
+                                    try:
+                                        img = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/div/div/div/div/div/a/div/div/picture/img').get_attribute('src')
+                                    except:
+                                        continue
+                                    try:
+                                        categorias = driver.find_elements_by_xpath('//*[@id="rsyswpsdk"]/div/main/div[1]/div/ul/li')
+                                    except:
+                                        continue
+                                    else:
+                                        try:
+                                            cat = categorias[1].text
+                                            subcat = categorias[len(categorias) - 1].text
+                                        except:
+                                            continue
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
                                     listamarca.append(marca)
@@ -238,12 +273,53 @@ for cod in listacod:
                                         break
                                     else:
                                         time.sleep(5)
-                                    nameproduto = driver.find_element_by_xpath('/html/body/div[1]/h1').text
-                                    marca = driver.find_element_by_xpath('/html/body/div[1]/div[6]/h2[1]/span').text
-                                    img = driver.find_element_by_xpath('//img[@class="miniImg"]').get_attribute('src')
-                                    categorias = driver.find_elements_by_xpath('//a[@class="semDecoracao"]')
-                                    cat = categorias[1].text
-                                    subcat = categorias[len(categorias) - 1].text
+                                    try:
+                                        nameproduto = driver.find_element_by_xpath('/html/body/div[1]/h1').text
+                                    except:
+                                        nomesprodutos.append('desconhecido')
+                                        listamarca.append('desconhecida')
+                                        listacat.append('desconhecida')
+                                        listasubcat.append('desconhecida')
+                                        listaimg.append('desconhecida')
+                                        break
+                                    try:
+                                        marca = driver.find_element_by_xpath('/html/body/div[1]/div[6]/h2[1]/span').text
+                                    except:
+                                        nomesprodutos.append('desconhecido')
+                                        listamarca.append('desconhecida')
+                                        listacat.append('desconhecida')
+                                        listasubcat.append('desconhecida')
+                                        listaimg.append('desconhecida')
+                                        break
+                                    try:
+                                        img = driver.find_element_by_xpath('//img[@class="miniImg"]').get_attribute('src')
+                                    except:
+                                        nomesprodutos.append('desconhecido')
+                                        listamarca.append('desconhecida')
+                                        listacat.append('desconhecida')
+                                        listasubcat.append('desconhecida')
+                                        listaimg.append('desconhecida')
+                                        break
+                                    try:
+                                        categorias = driver.find_elements_by_xpath('//a[@class="semDecoracao"]')
+                                    except:
+                                        nomesprodutos.append('desconhecido')
+                                        listamarca.append('desconhecida')
+                                        listacat.append('desconhecida')
+                                        listasubcat.append('desconhecida')
+                                        listaimg.append('desconhecida')
+                                        break
+                                    else:
+                                        try:
+                                            cat = categorias[1].text
+                                            subcat = categorias[len(categorias) - 1].text
+                                        except:
+                                            nomesprodutos.append('desconhecido')
+                                            listamarca.append('desconhecida')
+                                            listacat.append('desconhecida')
+                                            listasubcat.append('desconhecida')
+                                            listaimg.append('desconhecida')
+                                            break
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
                                     listamarca.append(marca)
@@ -315,14 +391,28 @@ for cod in listacod:
                                                 continue
                                             else:
                                                 nameproduto = nameproduto.split(' - ')[0]
-                                            marca = driver.find_element_by_xpath(
-                                                '//*[@data-testid="heading-product-brand"]').text
-                                            img = driver.find_element_by_xpath(
-                                                '//img[@data-testid="image-selected-thumbnail"]').get_attribute('src')
-                                            categorias = driver.find_elements_by_xpath(
-                                                '//*[@data-testid="breadcrumb-item-list"]')
-                                            cat = categorias[2].text
-                                            subcat = categorias[3].text
+                                            try:
+                                                marca = driver.find_element_by_xpath(
+                                                    '//*[@data-testid="heading-product-brand"]').text
+                                            except:
+                                                continue
+                                            try:
+                                                img = driver.find_element_by_xpath(
+                                                    '//img[@data-testid="image-selected-thumbnail"]').get_attribute(
+                                                    'src')
+                                            except:
+                                                continue
+                                            try:
+                                                categorias = driver.find_elements_by_xpath(
+                                                    '//*[@data-testid="breadcrumb-item-list"]')
+                                            except:
+                                                continue
+                                            else:
+                                                try:
+                                                    cat = categorias[2].text
+                                                    subcat = categorias[3].text
+                                                except:
+                                                    continue
 
                                             # adicionar as informações obtidas nas listas
                                             nomesprodutos.append(nameproduto)
@@ -343,15 +433,32 @@ for cod in listacod:
                                                     '//*[@id="rsyswpsdk"]//h1').text
                                             except:
                                                 continue
-                                            marca = driver.find_element_by_xpath(
-                                                '//*[@id="rsyswpsdk"]/div/main/div[6]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
-                                            img = driver.find_element_by_xpath(
-                                                '//*[@id="rsyswpsdk"]/div/div/div/div/div/div/a/div/div/picture/img').get_attribute(
-                                                'src')
-                                            categorias = driver.find_elements_by_xpath(
-                                                '//*[@id="rsyswpsdk"]/div/main/div[1]/div/ul/li')
-                                            cat = categorias[1].text
-                                            subcat = categorias[len(categorias) - 1].text
+                                            try:
+                                                marca = driver.find_element_by_xpath(
+                                                    '//*[@id="rsyswpsdk"]/div/main/div[6]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
+                                            except:
+                                                try:
+                                                    marca = driver.find_element_by_xpath(
+                                                        '//*[@id="rsyswpsdk"]/div/main/div[7]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
+                                                except:
+                                                    continue
+                                            try:
+                                                img = driver.find_element_by_xpath(
+                                                    '//*[@id="rsyswpsdk"]/div/div/div/div/div/div/a/div/div/picture/img').get_attribute(
+                                                    'src')
+                                            except:
+                                                continue
+                                            try:
+                                                categorias = driver.find_elements_by_xpath(
+                                                    '//*[@id="rsyswpsdk"]/div/main/div[1]/div/ul/li')
+                                            except:
+                                                continue
+                                            else:
+                                                try:
+                                                    cat = categorias[1].text
+                                                    subcat = categorias[len(categorias) - 1].text
+                                                except:
+                                                    continue
                                             # adicionar as informações obtidas nas listas
                                             nomesprodutos.append(nameproduto)
                                             listamarca.append(marca)
@@ -371,14 +478,55 @@ for cod in listacod:
                                                 break
                                             else:
                                                 time.sleep(5)
-                                            nameproduto = driver.find_element_by_xpath('/html/body/div[1]/h1').text
-                                            marca = driver.find_element_by_xpath(
-                                                '/html/body/div[1]/div[6]/h2[1]/span').text
-                                            img = driver.find_element_by_xpath('//img[@class="miniImg"]').get_attribute(
-                                                'src')
-                                            categorias = driver.find_elements_by_xpath('//a[@class="semDecoracao"]')
-                                            cat = categorias[1].text
-                                            subcat = categorias[len(categorias) - 1].text
+                                            try:
+                                                nameproduto = driver.find_element_by_xpath('/html/body/div[1]/h1').text
+                                            except:
+                                                nomesprodutos.append('desconhecido')
+                                                listamarca.append('desconhecida')
+                                                listacat.append('desconhecida')
+                                                listasubcat.append('desconhecida')
+                                                listaimg.append('desconhecida')
+                                                break
+                                            try:
+                                                marca = driver.find_element_by_xpath(
+                                                    '/html/body/div[1]/div[6]/h2[1]/span').text
+                                            except:
+                                                nomesprodutos.append('desconhecido')
+                                                listamarca.append('desconhecida')
+                                                listacat.append('desconhecida')
+                                                listasubcat.append('desconhecida')
+                                                listaimg.append('desconhecida')
+                                                break
+                                            try:
+                                                img = driver.find_element_by_xpath(
+                                                    '//img[@class="miniImg"]').get_attribute('src')
+                                            except:
+                                                nomesprodutos.append('desconhecido')
+                                                listamarca.append('desconhecida')
+                                                listacat.append('desconhecida')
+                                                listasubcat.append('desconhecida')
+                                                listaimg.append('desconhecida')
+                                                break
+                                            try:
+                                                categorias = driver.find_elements_by_xpath('//a[@class="semDecoracao"]')
+                                            except:
+                                                nomesprodutos.append('desconhecido')
+                                                listamarca.append('desconhecida')
+                                                listacat.append('desconhecida')
+                                                listasubcat.append('desconhecida')
+                                                listaimg.append('desconhecida')
+                                                break
+                                            else:
+                                                try:
+                                                    cat = categorias[1].text
+                                                    subcat = categorias[len(categorias) - 1].text
+                                                except:
+                                                    nomesprodutos.append('desconhecido')
+                                                    listamarca.append('desconhecida')
+                                                    listacat.append('desconhecida')
+                                                    listasubcat.append('desconhecida')
+                                                    listaimg.append('desconhecida')
+                                                    break
                                             # adicionar as informações obtidas nas listas
                                             nomesprodutos.append(nameproduto)
                                             listamarca.append(marca)
@@ -463,15 +611,15 @@ for cod in listacod:
         listacat.append('-')
         listasubcat.append('-')
         listaimg.append('-')
-    print('COD: {}'.format(listacod[ll]))
-    print('Produto: {}'.format(nomesprodutos[ll]))
-    print('Marca: {}'.format(listamarca[ll]))
-    print('Categoria: {}'.format(listacat[ll]))
-    print('Subcategoria: {}'.format(listasubcat[ll]))
-    print('Imagem: {}'.format(listaimg[ll]))
+    #print('COD: {}'.format(listacod[ll]))
+    #print('Produto: {}'.format(nomesprodutos[ll]))
+    #print('Marca: {}'.format(listamarca[ll]))
+    #print('Categoria: {}'.format(listacat[ll]))
+    #print('Subcategoria: {}'.format(listasubcat[ll]))
+    #print('Imagem: {}'.format(listaimg[ll]))
     ll += 1
 
-"""
+
 print('FECHANDO O NAVEGADOR!')
 driver.close()
 
@@ -491,7 +639,7 @@ for i in range(len(listacod)):
     w.writerow([listacod[i],nomesprodutos[i],listamarca[i],listacat[i],listasubcat[i],listaimg[i]])
 
 print('Planilha criada e escrita!')
-"""
+
 """
 #RESULTADO DAS LISTAS
 for linha in range(len(listacod)):
