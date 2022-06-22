@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 #LEITURA DO CÓDIGO DE BARRAS DO ARQUIVO CSV
 print('REALIZANDO A LEITURA DA PLANILHA...')
 listacod = []
-with open('csv/ListadeProdutos2.csv', encoding='utf-8') as arquivo_referencia:
+with open('csv/ListadeProdutosVal2.csv', encoding='utf-8') as arquivo_referencia:
   #vai ler a tabela delimitado por virgulas
   tabela = csv.reader(arquivo_referencia, delimiter=',')
   #essa variavel é somente para pular a primeira linha
@@ -18,7 +18,7 @@ with open('csv/ListadeProdutos2.csv', encoding='utf-8') as arquivo_referencia:
     #senao, realiza as operações seguintes
     else:
         #pega todos os dados da 5º coluna, que neste caso são os Codigo de barras
-        cod = l[4]
+        cod = l[0]
         if cod:
             listacod.append(cod)
         else:
@@ -32,6 +32,8 @@ listamarca = []
 listacat = []
 listasubcat = []
 listaimg = []
+listavalor = []
+listaorigem = []
 
 #OPÇÕES DE CONFIGURAÇÃO DO NAVEGADOR
 options = webdriver.ChromeOptions()
@@ -58,10 +60,21 @@ for cod in listacod:
             except:
                 #senao conseguiu acessar, vai exibir e pular para o proximo site
                 print('ERROR: Não foi possivel acessar a URL: {}'.format(url))
-                continue
+                if url == 'https://www.google.com.br/':
+                    print('PARADA OBRIGATÓRIA! Por favor, verifique a conexão e reinicie a execução do script')
+                    nomesprodutos.append('desconhecido')
+                    listamarca.append('desconhecida')
+                    listacat.append('desconhecida')
+                    listasubcat.append('desconhecida')
+                    listaimg.append('desconhecida')
+                    listavalor.append('desconhecido')
+                    listaorigem.append('desconhecida')
+                    break
+                else:
+                    continue
             else:
                 # Tempo para carregar o presente site
-                time.sleep(5)
+                time.sleep(3)
                 # Verificar o site corrente e realizar o tratamento de acordo cada site
                 if 'amazon.com.br' in url:
                     # buscar o produto pelo codigo
@@ -112,12 +125,25 @@ for cod in listacod:
                             subcat = categorias[len(categorias)-1].text
                         if subcat == '':
                             subcat = 'null'
+                        try:
+                            reais = driver.find_element_by_xpath('//*[@id="corePrice_feature_div"]/div/span/span[2]/span[2]').text
+                            centavos = driver.find_element_by_xpath('//*[@id="corePrice_feature_div"]/div/span/span[2]/span[3]').text
+                        except:
+                            continue
+                        else:
+                            valor = '{},{}'.format(reais,centavos)
+                        try:
+                            site = driver.current_url
+                        except:
+                            continue
                         #adicionar os atributos nas listas
                         nomesprodutos.append(nameproduto)
                         listamarca.append(marca)
                         listacat.append(cat)
                         listasubcat.append(subcat)
                         listaimg.append(img)
+                        listavalor.append(valor)
+                        listaorigem.append(site)
                         #parar o loop de urls de buscas
                         break
                 elif 'google.com.br' in url:
@@ -130,10 +156,11 @@ for cod in listacod:
                         listacat.append('desconhecida')
                         listasubcat.append('desconhecida')
                         listaimg.append('desconhecida')
+                        listavalor.append('desconhecido')
+                        listaorigem.append('desconhecida')
                         break
                     else:
                         input_busca.clear()
-                        #utilizei a magazineluiza pois trás resultados mais completos das informações desejadas
                         input_busca.send_keys(cod + Keys.ENTER)
                         time.sleep(3)
                     #verificar o resultado da pesquisa
@@ -147,6 +174,8 @@ for cod in listacod:
                         listacat.append('desconhecida')
                         listasubcat.append('desconhecida')
                         listaimg.append('desconhecida')
+                        listavalor.append('desconhecido')
+                        listaorigem.append('desconhecida')
                         break
                     else:
                         time.sleep(3)
@@ -167,13 +196,15 @@ for cod in listacod:
                                         time.sleep(5)
                                     # aceitar os cookies
                                     try:
-                                        driver.find_element_by_xpath(
-                                            '//button[@data-testid="button-message-box"]').click()
+                                        driver.find_element_by_xpath('//button[@data-testid="button-message-box"]').click()
                                     except:
                                         pass
                                     else:
                                         time.sleep(1)
-                                        driver.find_element_by_xpath('//div[@class="container-button-banner"]').click()
+                                        try:
+                                            driver.find_element_by_xpath('//div[@class="container-button-banner"]').click()
+                                        except:
+                                            pass
                                     time.sleep(5)
                                     # capturar as informações desejadas do site
                                     try:
@@ -201,12 +232,22 @@ for cod in listacod:
                                             subcat = categorias[3].text
                                         except:
                                             continue
+                                    try:
+                                        valor = driver.find_element_by_xpath('//*[@data-testid="price-value"]').text
+                                    except:
+                                        continue
+                                    try:
+                                        site = driver.current_url
+                                    except:
+                                        continue
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
                                     listamarca.append(marca)
                                     listacat.append(cat)
                                     listasubcat.append(subcat)
                                     listaimg.append(img)
+                                    listavalor.append(valor)
+                                    listaorigem.append(site)
                                     break
                                 elif 'www.americanas.com.br' in link1:
                                     try:
@@ -215,6 +256,11 @@ for cod in listacod:
                                         continue
                                     else:
                                         time.sleep(6)
+                                    #aceitar os cookies da amarecinas, para evitar bloqueio
+                                    try:
+                                        driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/header/div[2]/button').click()
+                                    except:
+                                        pass
                                     try:
                                         nameproduto = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]//h1').text
                                     except:
@@ -226,6 +272,8 @@ for cod in listacod:
                                             marca = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/main/div[7]/div[2]/div/div[2]/table/tbody/tr[3]/td[2]').text
                                         except:
                                             continue
+                                    if not marca:
+                                        marca = 'indisponivel'
                                     try:
                                         img = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/div/div/div/div/div/a/div/div/picture/img').get_attribute('src')
                                     except:
@@ -240,12 +288,22 @@ for cod in listacod:
                                             subcat = categorias[len(categorias) - 1].text
                                         except:
                                             continue
+                                    try:
+                                        valor = driver.find_element_by_xpath('//*[@id="rsyswpsdk"]/div/main/div[2]/div[2]/div[1]/div[1]/div').text
+                                    except:
+                                        valor = 'indisponivel'
+                                    try:
+                                        site = driver.current_url
+                                    except:
+                                        continue
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
                                     listamarca.append(marca)
                                     listacat.append(cat)
                                     listasubcat.append(subcat)
                                     listaimg.append(img)
+                                    listavalor.append(valor)
+                                    listaorigem.append(site)
                                     break
                                 elif 'www.ocompra.com' in link1:
                                     try:
@@ -256,6 +314,8 @@ for cod in listacod:
                                         listacat.append('desconhecida')
                                         listasubcat.append('desconhecida')
                                         listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
                                         break
                                     else:
                                         time.sleep(5)
@@ -267,6 +327,8 @@ for cod in listacod:
                                         listacat.append('desconhecida')
                                         listasubcat.append('desconhecida')
                                         listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
                                         break
                                     try:
                                         marca = driver.find_element_by_xpath('/html/body/div[1]/div[6]/h2[1]/span').text
@@ -276,6 +338,8 @@ for cod in listacod:
                                         listacat.append('desconhecida')
                                         listasubcat.append('desconhecida')
                                         listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
                                         break
                                     try:
                                         img = driver.find_element_by_xpath('//img[@class="miniImg"]').get_attribute('src')
@@ -285,6 +349,8 @@ for cod in listacod:
                                         listacat.append('desconhecida')
                                         listasubcat.append('desconhecida')
                                         listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
                                         break
                                     try:
                                         categorias = driver.find_elements_by_xpath('//a[@class="semDecoracao"]')
@@ -294,6 +360,8 @@ for cod in listacod:
                                         listacat.append('desconhecida')
                                         listasubcat.append('desconhecida')
                                         listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
                                         break
                                     else:
                                         try:
@@ -305,13 +373,29 @@ for cod in listacod:
                                             listacat.append('desconhecida')
                                             listasubcat.append('desconhecida')
                                             listaimg.append('desconhecida')
+                                            listavalor.append('desconhecido')
+                                            listaorigem.append('desconhecida')
                                             break
+                                    valor = 'indisponivel'
+                                    try:
+                                        site = driver.current_url
+                                    except:
+                                        nomesprodutos.append('desconhecido')
+                                        listamarca.append('desconhecida')
+                                        listacat.append('desconhecida')
+                                        listasubcat.append('desconhecida')
+                                        listaimg.append('desconhecida')
+                                        listavalor.append('desconhecido')
+                                        listaorigem.append('desconhecida')
+                                        break
                                     # adicionar as informações obtidas nas listas
                                     nomesprodutos.append(nameproduto)
                                     listamarca.append(marca)
                                     listacat.append(cat)
                                     listasubcat.append(subcat)
                                     listaimg.append(img)
+                                    listavalor.append(valor)
+                                    listaorigem.append(site)
                                     break
                                 else:
                                     link1 = ''
@@ -323,6 +407,8 @@ for cod in listacod:
                             listacat.append('desconhecida')
                             listasubcat.append('desconhecida')
                             listaimg.append('desconhecida')
+                            listavalor.append('desconhecido')
+                            listaorigem.append('desconhecida')
                             break
                 else:
                     print('ERROR: A URL NÃO FOI TRATADA! Por favor, trate a url {} antes de executar o script'.format(url))
@@ -332,12 +418,16 @@ for cod in listacod:
         listacat.append('-')
         listasubcat.append('-')
         listaimg.append('-')
+        listavalor.append('-')
+        listaorigem.append('-')
     #print('COD: {}'.format(listacod[ll]))
     #print('Produto: {}'.format(nomesprodutos[ll]))
     #print('Marca: {}'.format(listamarca[ll]))
     #print('Categoria: {}'.format(listacat[ll]))
     #print('Subcategoria: {}'.format(listasubcat[ll]))
     #print('Imagem: {}'.format(listaimg[ll]))
+    #print('Valor: {}'.format(listavalor[ll]))
+    #print('Origem: {}'.format(listaorigem[ll]))
     #ll += 1
 
 print('FECHANDO O NAVEGADOR!')
@@ -353,10 +443,11 @@ w = csv.writer(f)
 
 print('Escrevendo na planilha criada')
 #escreve a primeira linha
-w.writerow(['EAN/GTIN','TITULO','MARCA','CATEGORIA','SUB-CATEGORIA','IMAGE'])
+w.writerow(['EAN/GTIN','TITULO','MARCA','CATEGORIA','SUB-CATEGORIA','IMAGE','VALOR','ORIGEM'])
 for i in range(len(listacod)):
     #escreve as proximas linhas
-    w.writerow([listacod[i],nomesprodutos[i],listamarca[i],listacat[i],listasubcat[i],listaimg[i]])
+    #acrescentar valor e origem
+    w.writerow([listacod[i],nomesprodutos[i],listamarca[i],listacat[i],listasubcat[i],listaimg[i],listavalor[i],listaorigem[i]])
 
 print('Planilha criada e escrita!')
 
