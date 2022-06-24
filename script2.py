@@ -45,9 +45,10 @@ print('ABRINDO O NAVEGADOR')
 driver = webdriver.Chrome(executable_path="driver/chromedriver.exe",options=options)
 
 #URLS DE BUSCAS DE PRODUTOS
-urlsbusca = ['https://www.amazon.com.br/','https://www.google.com.br/']
+urlsbusca = ['https://www.amazon.com.br/','https://www.lleferragens.com.br/','https://www.google.com.br/']
 
 #ll = 0
+check = False
 #ACESSANDO OS SITES DE BUSCAS, REALIZANDO A BUSCA E TRAZENDO AS INFORMAÇÕES NECESSÁRIAS
 print('GERANDO O RESULTADO...')
 for cod in listacod:
@@ -56,7 +57,18 @@ for cod in listacod:
         for url in urlsbusca:
             #vai acessar todas as urls de buscas presente na lista urlsbusca
             try:
-                driver.get(url)
+                if 'lleferragens.com.br' in url:
+                    try:
+                        driver.get('https://www.lleferragens.com.br/produtos?search={}'.format(cod))
+                    except:
+                        continue
+                    else:
+                        time.sleep(2)
+                        if not check:
+                            input('Digite ENTER se fechou o chat e aceitou os cookies')
+                            check = True
+                else:
+                    driver.get(url)
             except:
                 #senao conseguiu acessar, vai exibir e pular para o proximo site
                 print('ERROR: Não foi possivel acessar a URL: {}'.format(url))
@@ -180,6 +192,58 @@ for cod in listacod:
                         listaorigem.append(site)
                         #parar o loop de urls de buscas
                         break
+                elif 'lleferragens.com.br' in url:
+                    try:
+                        res = driver.find_element_by_xpath('//div[@id="__next"]//div[@class="color-primary text-center fw-bold"]').text
+                    except:
+                        # tem produto
+                        try:
+                            driver.find_element_by_xpath('//*[@id="__next"]/div[1]/main/div[1]/div[2]/div[2]/div/div/div[2]/div[1]/div/div/div').click()
+                        except:
+                            continue
+                        else:
+                            time.sleep(3)
+                    else:
+                        #nao tem o produto
+                        continue
+                    try:
+                        nameproduto = driver.find_element_by_xpath('//*[@id="__next"]//h2').text
+                    except:
+                        continue
+                    else:
+                        nome = nameproduto.split(' - ')
+                        nameproduto = '{} - {}'.format(nome[0], nome[len(nome) - 1])
+                        marca = nome[1]
+                    try:
+                        cat = driver.find_element_by_xpath('//*[@id="__next"]/div[1]/main/div[1]/div[2]/div[1]/div/div[1]/div/div/div[2]/div[2]/div[2]/div[2]/div/div/div[1]').text
+                    except:
+                        continue
+                    else:
+                        cat = cat.split(': ')[1]
+                    try:
+                        subcat = driver.find_element_by_xpath('//*[@id="__next"]/div[1]/main/div[1]/div[2]/div[1]/div/div[1]/div/div/div[2]/div[2]/div[2]/div[2]/div/div/div[2]').text
+                    except:
+                        continue
+                    else:
+                        subcat = subcat.split(': ')[1]
+                    try:
+                        img = driver.find_element_by_xpath('//img[@class="image-gallery-image"]').get_attribute('src')
+                    except:
+                        continue
+                    valor = 'indisponivel'
+                    try:
+                        site = driver.current_url
+                    except:
+                        continue
+                    # adicionar os atributos nas listas
+                    nomesprodutos.append(nameproduto)
+                    listamarca.append(marca)
+                    listacat.append(cat)
+                    listasubcat.append(subcat)
+                    listaimg.append(img)
+                    listavalor.append(valor)
+                    listaorigem.append(site)
+                    break
                 elif 'google.com.br' in url:
                     #buscar pelo produto
                     try:
@@ -518,7 +582,7 @@ driver.close()
 #GRAVANDO EM UMA NOVA PLANILHA
 print('CRIANDO UMA NOVA PLANILHA...')
 # 1. cria o arquivo
-f = open('csv/Resultado4.csv', 'w', newline='', encoding='utf-8')
+f = open('csv/Resultado3.csv', 'w', newline='', encoding='utf-8')
 
 # 2. cria o objeto de gravação
 w = csv.writer(f)
